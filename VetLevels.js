@@ -6,20 +6,20 @@ function vetLevels() {
   let calendarURL;
   let timetableSpreadsheet;
   let calendarSpreadsheet;
-  const frequencyDays = [];
+  let frequencyDays = [];
   const frequencyMapping = [];
   let possibleLessonSlotsByTerm = [];
   let totalLessons = 0;
+  let lessonDifference;
 
   const programName = activeSheet.getRange("B9").getValue().trim();
   const courseName = activeSheet.getRange("C9").getValue().trim();
   const gradeLevel = String(activeSheet.getRange("D9").getValue()).trim();
   const levels = activeSheet.getRange("E9").getValue().trim();
-  const isOnRamp = activeSheet.getRange("F9").getValue() === "Yes";
+  const isOnRamp = activeSheet.getRange("F9").getValue().trim();
   const accelerationType = activeSheet.getRange("G9").getValue().trim();
-  let frequency = activeSheet.getRange("H9").getValue().trim();
-
-  let possibleLessonSlots = activeSheet.getRange("I9").getValue().trim();
+  let frequency = String(activeSheet.getRange("H9").getValue()).trim();
+  let possibleLessonSlots = String(activeSheet.getRange("I9").getValue()).trim();
 
   const gradePrefixMap = {
     BayelsaPRIME: "P",
@@ -97,8 +97,8 @@ function vetLevels() {
     }
   }
 
-  if (isOnRamp) {
-    totalLessons = totalLessons + 20;
+  if (isOnRamp === "Yes") {
+    totalLessons = totalLessons += 20;
   }
 
   if (urlPattern.test(frequency)) {
@@ -135,6 +135,16 @@ function vetLevels() {
         }
       }
     }
+  } else {
+    frequency = Number(frequency) || 0;
+    frequencyDays = ui
+      .prompt(
+        `Please provide the days of the week for the course using their 1-2 letter abbreviations, separated by spaces.\n For example: M T W Th F`,
+        ui.ButtonSet.OK_CANCEL
+      )
+      .getResponseText()
+      .trim()
+      .split(" ");
   }
 
   // Sort frequencyDays according to dayOrder
@@ -219,29 +229,59 @@ function vetLevels() {
       possibleLessonSlots *= 2;
       possibleLessonSlotsByTerm = possibleLessonSlotsByTerm.map((val) => val * 2);
     }
+  } else {
+    possibleLessonSlots = Number(possibleLessonSlots) || 0;
   }
 
-  if (totalLessons <= possibleLessonSlots) {
+  lessonDifference = possibleLessonSlots - totalLessons;
+
+  if (lessonDifference >= 0) {
     ui.alert(
-      "Success!",
+      "Sufficient Lesson Slots!",
       `
-      There are sufficient lesson slots to accommodate the required leveling based on the provided information. 
+      There are sufficient lesson slots to accommodate the required leveling based on the provided information.
 
       Program: ${programName}
       Course: ${courseName}
       Grade: ${gradePrefix + gradeLevel}
       Level(s): ${levels}
-      On-Ramp Status: ${isOnRamp === "Yes" ? true : false}
+      Uses On-Ramp: ${isOnRamp === "Yes" ? true : false}
       Course Frequency: ${frequency}
       Frequency Days: ${frequencyDays.join(", ")}
       
       Total Lessons Needed: ${totalLessons}
       Possible Lesson Slots: ${possibleLessonSlots}
-      Number of Possible Slots by Term/Semester: ${possibleLessonSlotsByTerm.join(", ")}
-      Number of Remaining Slots: ${possibleLessonSlots - totalLessons}
+      Number of Possible Slots by Term/Semester: ${possibleLessonSlotsByTerm.join(", ") || "Used manual inputs"}
+      Number of Remaining Slots: ${lessonDifference}
 
-      Timetable Used: ${timetableSpreadsheet.getName()}
-      Calendar Used: ${calendarSpreadsheet.getName()}
+      Timetable Used: ${timetableSpreadsheet ? timetableSpreadsheet.getName() : "Used manual inputs"}
+      Calendar Used: ${calendarSpreadsheet ? calendarSpreadsheet.getName() : "Used manual inputs"}
+      `,
+      ui.ButtonSet.OK
+    );
+  } else {
+    ui.alert(
+      "Insufficient Lesson Slots!",
+      `
+      The available lesson slots are insufficient for the required leveling based on the provided information. There is a shortage of **${Math.abs(
+        +lessonDifference
+      )}** lessons. Consider running some kind of acceleration!
+
+      Program: ${programName}
+      Course: ${courseName}
+      Grade: ${gradePrefix + gradeLevel}
+      Level(s): ${levels}
+      Uses On-Ramp: ${isOnRamp === "Yes" ? true : false}
+      Course Frequency: ${frequency}
+      Frequency Days: ${frequencyDays.join(", ")}
+      
+      Total Lessons Needed: ${totalLessons}
+      Possible Lesson Slots: ${possibleLessonSlots}
+      Number of Possible Slots by Term/Semester: ${possibleLessonSlotsByTerm.join(", ") || "Used manual inputs"}
+      Number of Remaining Slots: ${lessonDifference}
+
+      Timetable Used: ${timetableSpreadsheet ? timetableSpreadsheet.getName() : "Used manual inputs"}
+      Calendar Used: ${calendarSpreadsheet ? calendarSpreadsheet.getName() : "Used manual inputs"}
       `,
       ui.ButtonSet.OK
     );

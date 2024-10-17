@@ -12,6 +12,7 @@ function vetLevels() {
   let totalLessons = 0;
   let lessonDifference;
 
+  // Get user input values
   const programName = activeSheet.getRange("B9").getValue().trim();
   const courseName = activeSheet.getRange("C9").getValue().trim();
   const gradeLevel = String(activeSheet.getRange("D9").getValue()).trim();
@@ -21,6 +22,7 @@ function vetLevels() {
   let frequency = String(activeSheet.getRange("H9").getValue()).trim();
   let possibleLessonSlots = String(activeSheet.getRange("I9").getValue()).trim();
 
+  // ! Need to add prefix for Espoir RCA when available
   const gradePrefixMap = {
     BayelsaPRIME: "P",
     "Bridge Andhra Pradesh": "S",
